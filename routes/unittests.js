@@ -15,7 +15,11 @@ router.get('/', function(req, res, next) {
     var rallyAPI = getAPI();
 
     // test -  get the list of top level folders in our test plan
-    var testFolderList = getTestFolders(rallyAPI);
+    getTestFolders(rallyAPI);
+
+    // write the unit tests  results out to the appropriate test runs in Rally
+    writeTestResults(rallyAPI);
+
     res.send('unit tests POST method');
   });
 
@@ -30,9 +34,9 @@ router.get('/', function(req, res, next) {
         server: 'https://rally1.rallydev.com',  //this is the default and may be omitted
         requestOptions: {
             headers: {
-                'X-RallyIntegrationName': 'My cool node.js program',  //while optional, it is good practice to
-                'X-RallyIntegrationVendor': 'My company',             //provide this header information
-                'X-RallyIntegrationVersion': '1.0'                    
+                'X-RallyIntegrationName': 'Rally/React test integration',  //while optional, it is good practice to
+                'X-RallyIntegrationVendor': 'FDI',             //provide this header information
+                'X-RallyIntegrationVersion': '0.1'                    
             }
             //any additional request options (proxy options, timeouts, etc.)     
         }
@@ -66,4 +70,28 @@ router.get('/', function(req, res, next) {
     });
   }
   
+  function writeTestResults(restApi) {
+    restApi.create({
+        type: 'testcaseresult', //the type to create
+        data: {
+            Name: 'UnitTestIntegrationTestResult', //the data with which to populate the new object
+            TestCase: 'https://rally1.rallydev.com/slm/webservice/v2.0/testcase/260569786444',
+            Verdict: 'Pass',
+            Date: '2018-10-24',
+            Build: 'integration testing',
+            Notes: 'utint2'
+        },
+        fetch: ['FormattedID'],  //the fields to be returned on the created object
+        scope: {
+            workspace: '/workspace/12345' //optional, only required if creating in non-default workspace
+        },
+        requestOptions: {} //optional additional options to pass through to request
+    }, function(error, result) {
+        if(error) {
+            console.log(error);
+        } else {
+            console.log(result.Object);
+        }
+    });
+  }
   module.exports = router;
